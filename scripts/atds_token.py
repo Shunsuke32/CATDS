@@ -171,7 +171,7 @@ def run_all(langs_dir, target_lang, ident_norm=False):
     return atds_matrix, best_donors, piece_counts_sums
 
 if __name__ == "__main__":
-    csv_path = "result/bengali_21_20000_full.csv"
+    csv_path = "result/odia_21_19000_full.csv"
     grouped_paths = convert_csv_to_grouped_paths(csv_path)
     
     print('Getting model from /work/checkpoints/xlsr2_300m.pt')
@@ -199,23 +199,23 @@ if __name__ == "__main__":
     counts_sum_dict = {}
 
     for num_group, wav_list in grouped_paths.items():
-        getembeddings(wav_list, "/work/data/IndicSUPERB/kb_data_clean_m4a/bengali/train/audio", "/work/tmp/bengali.parquet")#/work/data/IndicSUPERB/kb_data_clean_m4a/punjabi/train/audioこれとか全部ドナー言語にするやつ
-        infer_kmeans("/work/tmp/k-means_punjabi.joblib", "/work/tmp/bengali.parquet", "/work/tmp/bengali_clustered.parquet")
+        getembeddings(wav_list, "/work/data/IndicSUPERB/kb_data_clean_m4a/odia/train/audio", "/work/tmp/odia.parquet")#/work/data/IndicSUPERB/kb_data_clean_m4a/punjabi/train/audioこれとか全部ドナー言語にするやつ
+        infer_kmeans("/work/tmp/k-means_punjabi.joblib", "/work/tmp/odia.parquet", "/work/tmp/odia_clustered.parquet")
         atds_matrix, best_donors, piece_counts_sums = run_all("tmp", "punjabi")
         
         ATDS_dict[f"{num_group}"] = best_donors['atds'].iloc[0]
-        counts_sum_dict[f"{num_group}"] = piece_counts_sums["bengali"]
+        counts_sum_dict[f"{num_group}"] = piece_counts_sums["odia"]
         
         print(f"Group {num_group}: ATDS = {ATDS_dict[f'{num_group}']}, Sum = {counts_sum_dict[f'{num_group}']}")
         
         try:
-            os.remove("/work/tmp/bengali.parquet")
-            os.remove("/work/tmp/bengali_clustered.parquet")
+            os.remove("/work/tmp/odia.parquet")
+            os.remove("/work/tmp/odia_clustered.parquet")
         except Exception as e:
             print(f"Error removing temporary files: {str(e)}")
 
     atds_df = pd.DataFrame.from_dict(ATDS_dict, orient='index', columns=['atds'])
-    atds_df.to_csv('/work/result/ATDS_bengali_21_20000_full.csv')
+    atds_df.to_csv('/work/result/ATDS_odia_21_19000_full.csv')
 
     counts_sum_df = pd.DataFrame.from_dict(counts_sum_dict, orient='index', columns=['piece_counts_sum'])
-    counts_sum_df.to_csv('/work/result/piece_counts_sums_bengali_21_20000_full.csv')
+    counts_sum_df.to_csv('/work/result/piece_counts_sums_odia_21_19000_full.csv')
