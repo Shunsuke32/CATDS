@@ -1,6 +1,7 @@
 .vscode
 data/*
 !data/.gitkeep
+!data/manifests/*
 outputs/*
 tmp/*
 !tmp/.gitkeep
