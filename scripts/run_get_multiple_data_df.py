@@ -24,9 +24,9 @@ def count_files(directory):
     return len([name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))])
 
 # 関数のパラメータを設定
-wav_dir = "/work/data/IndicSUPERB/kb_data_clean_m4a/malayalam/train/audio"
+wav_dir = "/work/data/IndicSUPERB/kb_data_clean_m4a/urdu/train/audio"
 num_hours = 0.006
-num_sets = 20000
+num_sets = 14000
 manifest_path = None
 
 # 現在の作業ディレクトリを表示
@@ -62,7 +62,7 @@ try:
             output_dir = "/work/result"
             if check_directory(output_dir):
                 # CSVファイルとして保存
-                output_file = os.path.join(output_dir, "malayalam_21_20000_full.csv")
+                output_file = os.path.join(output_dir, "urdu_21_14000_full.csv")
                 try:
                     with open(output_file, 'w', newline='') as csvfile:
                         writer = csv.writer(csvfile)
@@ -89,4 +89,4 @@ except Exception as e:
 
 print("\nScript execution completed.")
 print(f"Final check - Output directory exists: {os.path.exists('/work/result')}")
-print(f"Final check - Output file exists: {os.path.exists('/work/result/malayalam_21_20000_full.csv')}")
+print(f"Final check - Output file exists: {os.path.exists('/work/result/urdu_21_14000_full.csv')}")
