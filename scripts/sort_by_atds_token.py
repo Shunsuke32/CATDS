@@ -61,35 +61,35 @@ import random
 
 def sort_atds(random_shuffle=False):
     # ATDSスコアの読み込み
-    df = pd.read_csv("/work/result/ATDS_gujarati_21_20000_full.csv")
+    df = pd.read_csv("/work/result/ATDS_hindi_21sec_20000.csv")
     d = df.to_dict()
     ATDS_dict = d["atds"]
     #token数の合計値取得
-    df2 = pd.read_csv("/work/result/piece_counts_sums_gujarati_21_20000_full.csv")
+    df2 = pd.read_csv("/work/result/piece_counts_sums_hindi_21sec_20000.csv")
     d2 = df2.to_dict()
     token_dict = d2["piece_counts_sum"]
     # 音声ファイル情報の読み込み
-    wavfile_dict = pd.read_csv("/work/result/malayalam_21_20000_full.csv").to_dict()["data"]
+    wavfile_dict = pd.read_csv("/work/result/hindi_21sec_20000_train.csv").to_dict()["data"]
 
     # ATDSの正規化
     normalized_atds = {}
     for idx, atds in ATDS_dict.items():
         if idx in token_dict and token_dict[idx] > 0:
             x = token_dict[idx]
-            y = -0.0000004888*x*x + 0.00083211*x + 0.27343965
+            y = -0.0000007272*x*x + 0.00109283*x + 0.23890562
             print(token_dict[idx])
             print(y)
             normalized_atds[idx] = atds / y
             print(normalized_atds[idx])
     
     # 正規化されたATDSでソート
-    ATDS_sorted_list = sorted(normalized_atds.items(), key=lambda x: x[1], reverse=True)
+    ATDS_sorted_list = sorted(normalized_atds.items(), key=lambda x: x[1], reverse=False)
     print(ATDS_sorted_list)
     if random_shuffle:
         random.shuffle(ATDS_sorted_list)
     
     # 上位???件を選択
-    ATDS_filtered_list = ATDS_sorted_list[:16000]
+    ATDS_filtered_list = ATDS_sorted_list[:4000]
     num_group = [tup[0] for tup in ATDS_filtered_list]
     
     # 選択されたファイル情報を取得
@@ -118,8 +118,8 @@ def format_wav_list(data_list):
     return '\n'.join(formatted_rows)
 
 if __name__ == "__main__":
-    data_list = sort_atds(True)  # True for random shuffle
+    data_list = sort_atds(False)  # True for random shuffle
     formatted_wavfiles = format_wav_list(data_list)
-    with open('/work/data/manifests/pretrain/malayalam_21_20000to16000_random_seed3.tsv', 'w', encoding='utf-8') as f:
+    with open('/work/data/manifests/pretrain/hindi_21_20000to4000_ATDS_reverse.tsv', 'w', encoding='utf-8') as f:
         f.write(formatted_wavfiles)
 

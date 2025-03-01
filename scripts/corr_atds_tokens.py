@@ -91,7 +91,7 @@ def analyze_correlation(atds_file, counts_file):
    plt.title('Piece Counts Sum vs ATDS Score with Regression Lines')
    plt.legend()
    plt.grid(True, alpha=0.3)
-   plt.savefig('/work/result/punjabi_21_20000_full.png')
+   plt.savefig('/work/result/hindi_21sec_20000.png')
    plt.close()
    
    # Analyze ATDS vs tokens relationship
@@ -136,8 +136,8 @@ def analyze_correlation(atds_file, counts_file):
    return merged_df, token_stats
 
 # Run the analysis
-atds_file = '/work/result/ATDS_odia_21_19000_full.csv'
-counts_file = '/work/result/piece_counts_sums_odia_21_19000_full.csv'
+atds_file = '/work/result/ATDS_hindi_21sec_20000.csv'
+counts_file = '/work/result/piece_counts_sums_hindi_21sec_20000.csv'
 result_df, token_stats = analyze_correlation(atds_file, counts_file)
 
 # Display full correlation matrix
