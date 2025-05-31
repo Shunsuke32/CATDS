@@ -37,8 +37,8 @@ random3 = [28.13636976,
 ]
 
 LID = [28.13636976,
-25.93990028,
 27.06508557,
+25.93990028,
 26.11507883,
 25.73777119,
 25.79840992
@@ -77,4 +77,4 @@ plt.xticks(x, x)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(handles[::-1], labels[::-1])
 
-plt.savefig('/work/result/hindi_result.png', dpi=1000, bbox_inches='tight')
+plt.savefig('/work/result/hindi_result_20250406.png', dpi=1000, bbox_inches='tight')
