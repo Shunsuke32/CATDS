@@ -18,3 +18,7 @@ configs/*
 !configs/w2v2-large-cpt_indic-70h_9.yaml
 !configs/w2v2-large-finetune_punjabi-1h.yaml
 configs/vscode-debug.yaml
+valid_audio.tar
+atds_output.log
+correlation_plot.png
+master
