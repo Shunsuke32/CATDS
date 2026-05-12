@@ -1,145 +1,121 @@
-import pandas as pd
-import numpy as np
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Fit quadratic bias curve between piece_counts_sum and raw CATDS score."
+    )
+    parser.add_argument("--atds-csv", required=True, help="CSV from atds_token.py (must include atds + group_id)")
+    parser.add_argument("--counts-csv", required=True, help="CSV from atds_token.py (must include piece_counts_sum + group_id)")
+    parser.add_argument("--output-plot", default=None, help="Optional path to save scatter + regression plot")
+    parser.add_argument("--output-coef-csv", default=None, help="Optional path to save fitted coefficients")
+    return parser.parse_args()
+
+
 def analyze_correlation(atds_file, counts_file):
-   # Load the data with error handling
-   try:
-       atds_df = pd.read_csv(atds_file, index_col=0)
-       counts_df = pd.read_csv(counts_file, index_col=0)
-   except FileNotFoundError as e:
-       print(f"ファイルが見つかりません: {e}")
-       return
-   except pd.errors.EmptyDataError as e:
-       print(f"ファイルが空です: {e}")
-       return
-   except Exception as e:
-       print(f"データの読み込み中にエラーが発生しました: {e}")
-       return
-   
-   # Merge the dataframes
-   merged_df = pd.concat([atds_df, counts_df], axis=1)
-   
-   # Handle missing values
-   if merged_df.isnull().values.any():
-       print("データに欠損値が含まれています。欠損値を削除します。")
-       merged_df = merged_df.dropna()
-   
-   # Calculate correlations - Note: Order switched for consistency with plot
-   pearson_corr = stats.pearsonr(merged_df['piece_counts_sum'], merged_df['atds'])
-   spearman_corr = stats.spearmanr(merged_df['piece_counts_sum'], merged_df['atds'])
-   
-   print("Correlation Analysis Results:")
-   print(f"Pearson correlation coefficient: {pearson_corr[0]:.4f} (p-value: {pearson_corr[1]:.4f})")
-   print(f"Spearman correlation coefficient: {spearman_corr[0]:.4f} (p-value: {spearman_corr[1]:.4f})")
-   
-   # Prepare data for regression - Switched X and y
-   X = merged_df['piece_counts_sum'].values.reshape(-1, 1)
-   y = merged_df['atds'].values
-   
-   # Linear regression
-   linear_reg = LinearRegression()
-   linear_reg.fit(X, y)
-   linear_pred = linear_reg.predict(X)
-   
-   # Polynomial regression (degree=2) with debug information
-   poly = PolynomialFeatures(degree=2, include_bias=False)  # include_bias=False に設定
-   X_poly = poly.fit_transform(X)
-   
-   # デバッグ情報の表示
-   print("\nPolynomialFeatures変換の確認:")
-   print("X_poly shape:", X_poly.shape)
-   print("最初の行のデータ:", X_poly[0])
-   
-   poly_reg = LinearRegression(fit_intercept=True)  # fit_intercept=True のまま
-   poly_reg.fit(X_poly, y)
-   poly_pred = poly_reg.predict(X_poly)
-   
-   print("係数:", poly_reg.coef_)
-   print("切片:", poly_reg.intercept_)
-   
-   # Print regression equations
-   print("\nRegression Equations:")
-   print(f"Linear: y = {linear_reg.coef_[0]:.8f}x + {linear_reg.intercept_:.4f}")
-   print(f"R² (linear): {linear_reg.score(X, y):.4f}")
-   
-   # 回帰係数の順序を確認
-   # poly_reg.coef_ は [x, x^2] の順序であると仮定
-   print(f"Polynomial: y = {poly_reg.coef_[1]:.10f}x² + {poly_reg.coef_[0]:.8f}x + {poly_reg.intercept_:.8f}")
-   print(f"R² (polynomial): {poly_reg.score(X_poly, y):.4f}")
-   
-   # Create scatter plot with both regression lines
-   plt.figure(figsize=(12, 8))
-   
-   # Scatter plot - X and y switched
-   plt.scatter(X, y, alpha=0.5, label='Data points')
-   
-   # Sort X for smooth line plotting
-   sort_idx = np.argsort(X.flatten())
-   X_sorted = X[sort_idx]
-   
-   # Plot regression lines
-   plt.plot(X_sorted, linear_pred[sort_idx], 'r--', label='Linear regression', alpha=0.8)
-   plt.plot(X_sorted, poly_pred[sort_idx], 'g--', label='Polynomial regression', alpha=0.8)
-   
-   # Switched labels
-   plt.ylabel('ATDS Score')
-   plt.xlabel('Piece Counts Sum')
-   plt.title('Piece Counts Sum vs ATDS Score with Regression Lines')
-   plt.legend()
-   plt.grid(True, alpha=0.3)
-   plt.savefig('/work/result/hindi_21sec_20000.png')
-   plt.close()
-   
-   # Analyze ATDS vs tokens relationship
-   token_analysis = pd.DataFrame({
-       'ATDS': merged_df['atds'],
-       'Tokens': merged_df['piece_counts_sum']
-   }).sort_values('Tokens')  # Sort by Tokens instead of ATDS
-   
-   # Calculate statistics by token count quartile
-   token_stats = token_analysis.groupby(pd.qcut(token_analysis['Tokens'], 4))['ATDS'].agg([
-       'count',
-       'mean',
-       'std',
-       'min',
-       'max'
-   ]).round(2)
-   
-   print("\nTokens vs ATDS Analysis by Quartile:")
-   print(token_stats)
-   
-   # 検証用のコードを追加
-   def verify_polynomial_match(x_value, coef, intercept):
-       # 式から計算
-       y_equation = coef[1] * x_value**2 + coef[0] * x_value + intercept
-       
-       # モデルから予測
-       x_single = np.array([[x_value, x_value**2]])
-       y_model = poly_reg.predict(x_single)
-       
-       print(f"X値: {x_value:.6f}")
-       print(f"式からの計算値: {y_equation:.6f}")
-       print(f"モデルからの予測値: {y_model[0]:.6f}")
-       print(f"差分: {abs(y_equation - y_model[0]):.10f}")
-       print("-" * 50)
-   
-   print("\n回帰式とプロットの一致検証:")
-   # いくつかの点でテスト
-   test_points = [float(X.min()), float(X.mean()), float(X.max())]
-   for x in test_points:
-       verify_polynomial_match(x, poly_reg.coef_, poly_reg.intercept_)
-   
-   return merged_df, token_stats
+    atds_df = pd.read_csv(atds_file)
+    counts_df = pd.read_csv(counts_file)
+    if "group_id" not in atds_df.columns or "group_id" not in counts_df.columns:
+        raise ValueError("Both input CSVs must contain group_id column.")
 
-# Run the analysis
-atds_file = '/work/result/ATDS_hindi_21sec_20000.csv'
-counts_file = '/work/result/piece_counts_sums_hindi_21sec_20000.csv'
-result_df, token_stats = analyze_correlation(atds_file, counts_file)
+    merged_df = atds_df.merge(counts_df, on="group_id", how="inner").dropna(
+        subset=["atds", "piece_counts_sum"]
+    )
+    if merged_df.empty:
+        raise ValueError("No valid rows after merge/dropna.")
 
-# Display full correlation matrix
-print("\nFull correlation matrix:")
-print(result_df.corr())
+    pearson_corr = stats.pearsonr(merged_df["piece_counts_sum"], merged_df["atds"])
+    spearman_corr = stats.spearmanr(merged_df["piece_counts_sum"], merged_df["atds"])
+
+    X = merged_df["piece_counts_sum"].values.reshape(-1, 1)
+    y = merged_df["atds"].values
+
+    linear_reg = LinearRegression()
+    linear_reg.fit(X, y)
+    linear_pred = linear_reg.predict(X)
+
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    X_poly = poly.fit_transform(X)
+    poly_reg = LinearRegression(fit_intercept=True)
+    poly_reg.fit(X_poly, y)
+    poly_pred = poly_reg.predict(X_poly)
+
+    a = float(poly_reg.coef_[1])
+    b = float(poly_reg.coef_[0])
+    c = float(poly_reg.intercept_)
+
+    metrics = {
+        "pearson_r": float(pearson_corr[0]),
+        "pearson_p": float(pearson_corr[1]),
+        "spearman_r": float(spearman_corr[0]),
+        "spearman_p": float(spearman_corr[1]),
+        "linear_r2": float(linear_reg.score(X, y)),
+        "poly_r2": float(poly_reg.score(X_poly, y)),
+        "coef_a": a,
+        "coef_b": b,
+        "coef_c": c,
+    }
+    return merged_df, linear_pred, poly_pred, metrics
+
+
+def save_plot(merged_df, linear_pred, poly_pred, output_plot):
+    X = merged_df["piece_counts_sum"].values.reshape(-1, 1)
+    y = merged_df["atds"].values
+    sort_idx = np.argsort(X.flatten())
+    X_sorted = X[sort_idx]
+
+    plt.figure(figsize=(12, 8))
+    plt.scatter(X, y, alpha=0.5, label="Data points")
+    plt.plot(X_sorted, linear_pred[sort_idx], "r--", label="Linear regression", alpha=0.8)
+    plt.plot(X_sorted, poly_pred[sort_idx], "g--", label="Polynomial regression", alpha=0.8)
+    plt.ylabel("Raw CATDS score")
+    plt.xlabel("Piece Counts Sum")
+    plt.title("Piece Counts Sum vs Raw CATDS Score")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    Path(output_plot).parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_plot)
+    plt.close()
+
+
+def main():
+    args = parse_args()
+    merged_df, linear_pred, poly_pred, metrics = analyze_correlation(
+        args.atds_csv, args.counts_csv
+    )
+
+    print("Correlation Analysis Results:")
+    print(f"Pearson r={metrics['pearson_r']:.4f} (p={metrics['pearson_p']:.4g})")
+    print(f"Spearman r={metrics['spearman_r']:.4f} (p={metrics['spearman_p']:.4g})")
+    print(f"Linear R^2={metrics['linear_r2']:.4f}")
+    print(f"Polynomial R^2={metrics['poly_r2']:.4f}")
+    print(
+        "Quadratic equation for correction denominator:\n"
+        f"y = {metrics['coef_a']:.12f} * x^2 + {metrics['coef_b']:.12f} * x + {metrics['coef_c']:.12f}"
+    )
+    print(
+        "Use these values in sort_by_atds_token.py as:\n"
+        f"--coef-a {metrics['coef_a']} --coef-b {metrics['coef_b']} --coef-c {metrics['coef_c']}"
+    )
+
+    if args.output_plot:
+        save_plot(merged_df, linear_pred, poly_pred, args.output_plot)
+        print(f"Saved plot: {args.output_plot}")
+
+    if args.output_coef_csv:
+        Path(args.output_coef_csv).parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame([metrics]).to_csv(args.output_coef_csv, index=False)
+        print(f"Saved coefficients: {args.output_coef_csv}")
+
+
+if __name__ == "__main__":
+    main()

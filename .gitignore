@@ -1,24 +1,38 @@
-.vscode
-analyses/*
-autoatds/*
-data/*
-!data/.gitkeep
-checkpoints/*
-!checkpoints/.gitkeep
-outputs/*
+.vscode/
+.idea/
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local experiment outputs
+outputs/
 tmp/*
 !tmp/.gitkeep
+wandb/
+*.log
+
+# Local checkpoints (keep placeholder only)
 checkpoints/*
 !checkpoints/.gitkeep
-result/*
-!result/.gitkeep
-__pycache__
-.ipynb_checkpoints
-configs/*
-!configs/w2v2-large-cpt_indic-70h_9.yaml
-!configs/w2v2-large-finetune_punjabi-1h.yaml
+
+# Local working area
+work/
+
+# Data policy: keep raw audio out of git
+data/*
+!data/.gitkeep
+# Manifests are usually large and environment-specific.
+# Keep them ignored by default; add intentionally for curated releases.
+data/manifests/
+
+# Local docs/notes (keep out of release snapshots unless explicitly added)
+docs/
+
+# Local dependency checkouts
+flashlight/
+sequence/
+
 configs/vscode-debug.yaml
-valid_audio.tar
-atds_output.log
-correlation_plot.png
-master

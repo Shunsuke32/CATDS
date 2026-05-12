@@ -1,125 +1,125 @@
-# import pandas as pd
-# import random
-
-# def sort_atds(random_shuffle=False):
-#     df = pd.read_csv("/work/result/ATDS_hindi_18_6000.csv")
-#     d = df.to_dict()
-#     ATDS_dict = d["atds"]
-#     #print(ATDS_dict)
-#     ATDS_sorted_list = sorted(ATDS_dict.items(), key=lambda x:x[1], reverse=True)
-#     print(ATDS_sorted_list)
-#     wavfile_dict = pd.read_csv("/work/result/hindi18sec_6000_data.csv").to_dict()["data"]
-#     print(wavfile_dict[20])
-
-#     num_group = []
-#     if random_shuffle == True:
-#         random.shuffle(ATDS_sorted_list)
-#     ATDS_filtered_list = ATDS_sorted_list[:3000] 
-#     print(len(ATDS_filtered_list))
-#     for tup in ATDS_filtered_list:
-#         num_group.append(tup[0])
-    
-#     finaldf = []
-#     for num in num_group:
-#         finaldf.append(wavfile_dict[num])
-
-#     return finaldf
-
-# def format_wav_list(data_list):
-    
-#     formatted_rows = []
-    
-#     for line in data_list:
-#         # Extract filenames and numbers using string operations
-#         if 'path' in line and 'num_frames' in line:
-#             # Split the line and extract relevant parts
-#             parts = line.split()
-#             for i, part in enumerate(parts):
-#                 if '.wav' in part:
-#                     filename = part.strip(',"')
-#                     num_frames = parts[i + 1].strip()
-#                     formatted_row = f"{filename}\t{num_frames}"
-#                     if formatted_row not in formatted_rows:  # Avoid duplicates
-#                         formatted_rows.append(formatted_row)
-#                     break
-
-    
-#     # Join all rows with newlines
-#     return '\n'.join(formatted_rows)
-
-
-# if __name__ == "__main__":
-#     #ランダムにするならsort_atds(True)
-#     data_list = sort_atds(False)
-#     formatted_wavfiles = format_wav_list(data_list)
-#     print(formatted_wavfiles)
-#     with open('/work/data/manifests/pretrain/hindi_train_18sec6000_filterto3000_random.tsv', 'w', encoding='utf-8') as f:
-#         f.write(formatted_wavfiles)
+#!/usr/bin/env python3
+import argparse
+import random
+from pathlib import Path
 
 import pandas as pd
-import random
 
-def sort_atds(random_shuffle=False):
-    # ATDSスコアの読み込み
-    df = pd.read_csv("/work/result/ATDS_hindi_21sec_20000.csv")
-    d = df.to_dict()
-    ATDS_dict = d["atds"]
-    #token数の合計値取得
-    df2 = pd.read_csv("/work/result/piece_counts_sums_hindi_21sec_20000.csv")
-    d2 = df2.to_dict()
-    token_dict = d2["piece_counts_sum"]
-    # 音声ファイル情報の読み込み
-    wavfile_dict = pd.read_csv("/work/result/hindi_21sec_20000_train.csv").to_dict()["data"]
 
-    # ATDSの正規化
-    normalized_atds = {}
-    for idx, atds in ATDS_dict.items():
-        if idx in token_dict and token_dict[idx] > 0:
-            x = token_dict[idx]
-            y = -0.0000007272*x*x + 0.00109283*x + 0.23890562
-            print(token_dict[idx])
-            print(y)
-            normalized_atds[idx] = atds / y
-            print(normalized_atds[idx])
-    
-    # 正規化されたATDSでソート
-    ATDS_sorted_list = sorted(normalized_atds.items(), key=lambda x: x[1], reverse=False)
-    print(ATDS_sorted_list)
-    if random_shuffle:
-        random.shuffle(ATDS_sorted_list)
-    
-    # 上位???件を選択
-    ATDS_filtered_list = ATDS_sorted_list[:4000]
-    num_group = [tup[0] for tup in ATDS_filtered_list]
-    
-    # 選択されたファイル情報を取得
-    finaldf = []
-    for num in num_group:
-        finaldf.append(wavfile_dict[num])
-    return finaldf
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Normalize CATDS scores with a quadratic correction and export top-N groups as manifest rows."
+    )
+    parser.add_argument("--atds-csv", required=True, help="CSV produced by atds_token.py")
+    parser.add_argument("--counts-csv", required=True, help="Token count CSV produced by atds_token.py")
+    parser.add_argument("--groups-csv", required=True, help="Grouped donor CSV produced by run_get_multiple_data_df.py")
+    parser.add_argument("--output-manifest", required=True, help="Output TSV path for selected groups")
+    parser.add_argument("--top-n", type=int, required=True, help="Number of groups to select")
+    parser.add_argument("--coef-a", type=float, required=True, help="Quadratic coefficient a for a*x^2 + b*x + c")
+    parser.add_argument("--coef-b", type=float, required=True, help="Quadratic coefficient b for a*x^2 + b*x + c")
+    parser.add_argument("--coef-c", type=float, required=True, help="Quadratic coefficient c for a*x^2 + b*x + c")
+    parser.add_argument("--equation-floor", type=float, default=1e-8, help="Minimum denominator floor to avoid division by zero")
+    parser.add_argument("--manifest-root", default=None, help="Optional first line for fairseq TSV manifest root path")
+    parser.add_argument("--shuffle", action="store_true", help="Shuffle ranking before selecting top-N")
+    parser.add_argument("--output-ranking-csv", default=None, help="Optional CSV path to save normalized ranking details")
+    return parser.parse_args()
 
-def format_wav_list(data_list):
-    formatted_rows = []
-    
-    for line in data_list:
-        # DataFrameの形式で書かれたテキストを行ごとに分割
-        rows = line.strip().split('\n')
-        for row in rows[1:]:  # ヘッダー行をスキップ
-            if row.strip():  # 空行でない場合
-                # 行をスペースで分割して必要な情報を抽出
-                parts = row.strip().split()
-                # 最後の要素がフレーム数、その直前がパス
-                filename = parts[-2].strip(',"')
-                num_frames = parts[-1].strip()
-                formatted_row = f"{filename}\t{num_frames}"
-                if formatted_row not in formatted_rows:
-                    formatted_rows.append(formatted_row)
-    
-    return '\n'.join(formatted_rows)
+
+def parse_group_rows(data_text):
+    rows = []
+    for line in str(data_text).splitlines():
+        line = line.strip()
+        if not line or line.startswith("path"):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        wav = None
+        frames = None
+        for i, part in enumerate(parts):
+            cleaned = part.strip("\"',")
+            if cleaned.endswith(".wav"):
+                wav = cleaned
+                if i + 1 < len(parts):
+                    frames = parts[i + 1].strip("\"',")
+                break
+        if wav is not None and frames is not None:
+            rows.append(f"{wav}\t{frames}")
+    return rows
+
+
+def main():
+    args = parse_args()
+
+    atds_df = pd.read_csv(args.atds_csv)
+    counts_df = pd.read_csv(args.counts_csv)
+    groups_df = pd.read_csv(args.groups_csv)
+
+    if "group_id" not in atds_df.columns:
+        raise ValueError("atds-csv must contain 'group_id' column")
+    if "group_id" not in counts_df.columns:
+        raise ValueError("counts-csv must contain 'group_id' column")
+
+    merged = atds_df.merge(counts_df, on="group_id", how="inner")
+    merged = merged.dropna(subset=["atds", "piece_counts_sum"]).copy()
+    merged["piece_counts_sum"] = merged["piece_counts_sum"].astype(float)
+
+    denom = (
+        args.coef_a * merged["piece_counts_sum"] ** 2
+        + args.coef_b * merged["piece_counts_sum"]
+        + args.coef_c
+    )
+    denom = denom.where(denom.abs() >= args.equation_floor, args.equation_floor)
+    merged["normalized_catds"] = merged["atds"] / denom
+
+    ranking = list(
+        merged.sort_values("normalized_catds", ascending=False)[
+            ["group_id", "atds", "piece_counts_sum", "normalized_catds"]
+        ].itertuples(index=False, name=None)
+    )
+    if args.shuffle:
+        random.shuffle(ranking)
+
+    selected_group_ids = [int(row[0]) for row in ranking[: args.top_n]]
+    group_text_map = {}
+    for _, row in groups_df.iterrows():
+        gid = int(row["index"]) if "index" in row else int(_)
+        group_text_map[gid] = row["data"]
+
+    output_rows = []
+    seen = set()
+    for gid in selected_group_ids:
+        if gid not in group_text_map:
+            continue
+        for row in parse_group_rows(group_text_map[gid]):
+            if row not in seen:
+                seen.add(row)
+                output_rows.append(row)
+
+    out_manifest = Path(args.output_manifest)
+    out_manifest.parent.mkdir(parents=True, exist_ok=True)
+    with out_manifest.open("w", encoding="utf-8") as f:
+        if args.manifest_root:
+            f.write(f"{args.manifest_root}\n")
+        f.write("\n".join(output_rows))
+        if output_rows:
+            f.write("\n")
+
+    if args.output_ranking_csv:
+        Path(args.output_ranking_csv).parent.mkdir(parents=True, exist_ok=True)
+        merged.sort_values("normalized_catds", ascending=False).to_csv(
+            args.output_ranking_csv, index=False
+        )
+
+    print(f"Selected groups: {len(selected_group_ids)}")
+    print(f"Manifest rows written: {len(output_rows)}")
+    print(f"Saved manifest: {out_manifest}")
+    print(
+        "Normalization equation: "
+        f"score / ({args.coef_a}*x^2 + {args.coef_b}*x + {args.coef_c}), "
+        "x=piece_counts_sum"
+    )
+
 
 if __name__ == "__main__":
-    data_list = sort_atds(False)  # True for random shuffle
-    formatted_wavfiles = format_wav_list(data_list)
-    with open('/work/data/manifests/pretrain/hindi_21_20000to4000_ATDS_reverse.tsv', 'w', encoding='utf-8') as f:
-        f.write(formatted_wavfiles)
-
+    main()
