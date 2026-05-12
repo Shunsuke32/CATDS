@@ -1,15 +1,7 @@
-# CVTDS: Clip-Level Donor Selection for wav2vec 2.0 Continued Pre-Training
+# CVTDS: Clip-Level Donor Selection for SSL model Continued Pre-Training
 
 This repository is maintained as a CVTDS execution repository.
 The focus is clip-level donor selection, continued pre-training, fine-tuning, and ASR evaluation.
-
-## Acknowledgement
-
-This repository was built with reference to:
-
-- `fauxneticien/w2v2-cpt-transfer`
-
-Thank you to the original authors for open implementation details.
 
 ## What is used
 
@@ -103,10 +95,10 @@ python scripts/wav_len_checker.py \
 
 ```bash
 python scripts/run_get_multiple_data_df.py \
-  --wav-dir /work/data/IndicSUPERB/kb_data_clean_m4a/gujarati/train/audio \
+  --wav-dir /work/data/IndicSUPERB/kb_data_clean_m4a/hindi/train/audio \
   --num-hours 0.006 \
   --num-sets 20000 \
-  --output-csv /work/result/gujarati_21_20000_full.csv
+  --output-csv /work/result/hindi_21_20000_full.csv
 ```
 
 ### 2) Prepare target representation space
@@ -149,15 +141,15 @@ python scripts/infer_k-means.py \
 
 ```bash
 python scripts/atds_token.py \
-  --groups-csv /work/result/gujarati_21_20000_full.csv \
-  --donor-wav-dir /work/data/IndicSUPERB/kb_data_clean_m4a/gujarati/train/audio \
+  --groups-csv /work/result/hindi_21_20000_full.csv \
+  --donor-wav-dir /work/data/IndicSUPERB/kb_data_clean_m4a/hindi/train/audio \
   --target-clustered-parquet /work/tmp/punjabi_clustered.parquet \
   --kmeans-model /work/tmp/k-means_punjabi.joblib \
   --checkpoint-path /work/checkpoints/xlsr2_300m.pt \
   --target-lang punjabi \
-  --donor-lang gujarati \
-  --output-atds-csv /work/result/ATDS_gujarati_21_20000_full.csv \
-  --output-piece-counts-csv /work/result/piece_counts_sums_gujarati_21_20000_full.csv \
+  --donor-lang hindi \
+  --output-atds-csv /work/result/ATDS_hindi_21_20000_full.csv \
+  --output-piece-counts-csv /work/result/piece_counts_sums_hindi_21_20000_full.csv \
   --tmp-dir /work/tmp
 ```
 
@@ -168,10 +160,10 @@ Note about `tgt_utts.txt`:
 
 ```bash
 python scripts/corr_atds_tokens.py \
-  --atds-csv /work/result/ATDS_gujarati_21_20000_full.csv \
-  --counts-csv /work/result/piece_counts_sums_gujarati_21_20000_full.csv \
-  --output-plot /work/result/gujarati_bias_fit.png \
-  --output-coef-csv /work/result/gujarati_bias_coef.csv
+  --atds-csv /work/result/ATDS_hindi_21_20000_full.csv \
+  --counts-csv /work/result/piece_counts_sums_hindi_21_20000_full.csv \
+  --output-plot /work/result/hindi_bias_fit.png \
+  --output-coef-csv /work/result/hindi_bias_coef.csv
 ```
 
 The script prints:
@@ -181,19 +173,20 @@ The script prints:
 ### 5) Normalize and select top-N groups
 
 Put the fitted coefficients directly in CLI (`--coef-a --coef-b --coef-c`):
+The example below uses `--top-n 4000`, which is 20% of the original 20,000 donor groups.
 
 ```bash
 python scripts/sort_by_atds_token.py \
-  --atds-csv /work/result/ATDS_gujarati_21_20000_full.csv \
-  --counts-csv /work/result/piece_counts_sums_gujarati_21_20000_full.csv \
-  --groups-csv /work/result/gujarati_21_20000_full.csv \
+  --atds-csv /work/result/ATDS_hindi_21_20000_full.csv \
+  --counts-csv /work/result/piece_counts_sums_hindi_21_20000_full.csv \
+  --groups-csv /work/result/hindi_21_20000_full.csv \
   --coef-a -0.0000004010 \
   --coef-b 0.00083133 \
   --coef-c 0.26619643 \
-  --top-n 500 \
-  --manifest-root /work/data/IndicSUPERB/kb_data_clean_m4a/gujarati/train/audio \
-  --output-manifest /work/data/manifests/pretrain/gujarati_21_20000to500_CVTDS.tsv \
-  --output-ranking-csv /work/result/gujarati_21_20000_ranking.csv
+  --top-n 4000 \
+  --manifest-root /work/data/IndicSUPERB/kb_data_clean_m4a/hindi/train/audio \
+  --output-manifest /work/data/manifests/pretrain/hindi_21_20000to4000_CVTDS.tsv \
+  --output-ranking-csv /work/result/hindi_21_20000_ranking.csv
 ```
 
 ## Training and Evaluation
@@ -216,7 +209,7 @@ So `custom_task/` is important for this CPT config.
 fairseq-hydra-train \
   --config-dir /work/configs \
   --config-name w2v2-large-cpt_indic-70h_9 \
-  dataset.train_subset='punjabi_10h_pretrain,gujarati_21_20000to500_CVTDS'
+  dataset.train_subset='punjabi_10h_pretrain,hindi_21_20000to4000_CVTDS'
 ```
 
 ### Convert checkpoint before fine-tuning (custom task case)
@@ -253,9 +246,14 @@ python /fairseq/examples/speech_recognition/infer.py \
 
 ## Additional Documentation
 
-- Local/HPC run memo (Japanese): `docs/operations-ja.md`
-- Release checklist: `docs/release-checklist.md`
-- Data directory notes: `data/README.md`
 - Python dependencies: `requirements.txt`
-- Contribution guide: `CONTRIBUTING.md`
 - `custom_task` provenance: `custom_task/README.md`
+- Script notes: `scripts/README.md`
+
+## Acknowledgement
+
+This repository was built with reference to:
+
+- [fauxneticien/w2v2-cpt-transfer](https://github.com/fauxneticien/w2v2-cpt-transfer.git)
+
+Thank you to the original authors for open implementation details.
