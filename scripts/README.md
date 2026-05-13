@@ -17,21 +17,7 @@
 - `resample_16000Hz.py` (CLI): recursive WAV resampling
 - `wav_len_checker.py` (CLI): list/move long clips by threshold (single unified tool)
 - `wav_len_checker_move.py`: compatibility wrapper; use `wav_len_checker.py` instead
-- `savedata_for_pretrain.py`
-- `savedata_manifests.py`
-- `csv_to_tsv_valid.py`
-- `make_manifests_for_finetuning_new.py`
-
-## Analysis/selection helpers
-
-- `extract_and_kmeans_and_atds.py`
-- `extract_filtereddata_byATDS.py`
-- `atds_manifests.py`
-- `atds_token.py`
-- `corr_atds_len.py`
-- `corr_atds_tokens.py`
 
 ## Notes
 
-- Several helper scripts are experiment-specific and may contain fixed paths.
 - Prefer documenting a reproducible command in `README.md` when adding new scripts.
