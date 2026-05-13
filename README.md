@@ -1,13 +1,13 @@
-# CVTDS: Clip-Level Donor Selection for SSL model Continued Pre-Training
+# CATDS: Clip-Level Donor Selection for SSL model Continued Pre-Training
 
-This repository is maintained as a CVTDS execution repository.
+This repository is maintained as a CATDS execution repository.
 The focus is clip-level donor selection, continued pre-training, fine-tuning, and ASR evaluation.
 
 Paper: [Interspeech 2025 (PDF)](https://www.isca-archive.org/interspeech_2025/mitsumori25_interspeech.pdf)
 
 ## What is used
 
-- CVTDS scripts (`scripts/`)
+- CATDS scripts (`scripts/`)
 - fairseq training configs (`configs/`)
 - fairseq manifests (`data/manifests/`)
 - custom fairseq task (`custom_task/`) for continued pre-training config `_9`
@@ -51,11 +51,11 @@ Example (`data/manifests/pretrain/punjabi_train-10h.tsv`):
 844424931325353-1163-f.wav      100682
 ```
 
-Dataset used in this CVTDS workflow:
+Dataset used in this CATDS workflow:
 
 - IndicSUPERB: https://ai4bharat.iitm.ac.in/indicsuperb/
 
-## CVTDS Pipeline
+## CATDS Pipeline
 
 ### 0) Audio preprocessing (16kHz mono)
 
@@ -131,7 +131,7 @@ python scripts/infer_k-means.py \
   /work/tmp/punjabi_clustered.parquet
 ```
 
-### 3) Compute raw per-group CVTDS score
+### 3) Compute raw per-group CATDS score
 
 `scripts/atds_token.py` now performs all of the following in one command:
 
@@ -187,7 +187,7 @@ python scripts/sort_by_atds_token.py \
   --coef-c 0.26619643 \
   --top-n 4000 \
   --manifest-root /work/data/IndicSUPERB/kb_data_clean_m4a/hindi/train/audio \
-  --output-manifest /work/data/manifests/pretrain/hindi_21_20000to4000_CVTDS.tsv \
+  --output-manifest /work/data/manifests/pretrain/hindi_21_20000to4000_CATDS.tsv \
   --output-ranking-csv /work/result/hindi_21_20000_ranking.csv
 ```
 
@@ -211,7 +211,7 @@ So `custom_task/` is important for this CPT config.
 fairseq-hydra-train \
   --config-dir /work/configs \
   --config-name w2v2-large-cpt_indic-70h_9 \
-  dataset.train_subset='punjabi_10h_pretrain,hindi_21_20000to4000_CVTDS'
+  dataset.train_subset='punjabi_10h_pretrain,hindi_21_20000to4000_CATDS'
 ```
 
 ### Convert checkpoint before fine-tuning (custom task case)

@@ -6,7 +6,7 @@
 - `learn_k-means.py`: trains MiniBatchKMeans on extracted embeddings.
 - `infer_k-means.py`: assigns cluster IDs to embedding frames.
 - `run_get_multiple_data_df.py`: builds donor clip groups (CSV) using `--num-hours` and `--num-sets`.
-- `atds_token.py`: computes per-group raw CVTDS/CATDS scores and token counts (fully CLI-based).
+- `atds_token.py`: computes per-group raw CATDS scores and token counts (fully CLI-based).
 - `corr_atds_tokens.py`: fits quadratic correction coefficients from raw scores vs token counts.
 - `sort_by_atds_token.py`: applies coefficient-based normalization and exports top-N manifest rows.
 - `convert-checkpoint.py`: converts custom-task checkpoints for standard wav2vec fine-tuning.
