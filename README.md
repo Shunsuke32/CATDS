@@ -3,6 +3,8 @@
 This repository is maintained as a CVTDS execution repository.
 The focus is clip-level donor selection, continued pre-training, fine-tuning, and ASR evaluation.
 
+Paper: [Interspeech 2025 (PDF)](https://www.isca-archive.org/interspeech_2025/mitsumori25_interspeech.pdf)
+
 ## What is used
 
 - CVTDS scripts (`scripts/`)
@@ -257,3 +259,19 @@ This repository was built with reference to:
 - [fauxneticien/w2v2-cpt-transfer](https://github.com/fauxneticien/w2v2-cpt-transfer.git)
 
 Thank you to the original authors for open implementation details.
+
+## Citation
+
+If you use this repository, please cite:
+
+```bibtex
+@inproceedings{mitsumori25_interspeech,
+  title     = {{Cross-lingual Data Selection Using Clip-level Acoustic Similarity for Enhancing Low-resource Automatic Speech Recognition}},
+  author    = {Shunsuke Mitsumori and Sara Kashiwagi and Keitaro Tanaka and Shigeo Morishima},
+  year      = {2025},
+  booktitle = {{Interspeech 2025}},
+  pages     = {3314--3318},
+  doi       = {10.21437/Interspeech.2025-1399},
+  issn      = {2958-1796},
+}
+```
